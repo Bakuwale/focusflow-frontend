@@ -1,0 +1,33 @@
+/* FocusFlow - Theme tokens
+ * Color variables and basic elevation; will be reused across components.
+ */
+
+:root {
+  /* Brand */
+  --ff-color-primary: #6366f1;
+  --ff-color-primary-soft: rgba(99, 102, 241, 0.16);
+  --ff-color-accent: #22c55e;
+  --ff-color-warning: #f97316;
+  --ff-color-danger: #ef4444;
+
+  /* Surface */
+  --ff-color-bg: #050816;
+  --ff-color-surface: #0b1020;
+  --ff-color-surface-soft: #111827;
+
+  /* Text */
+  --ff-color-text: #f9fafb;
+  --ff-color-text-muted: #9ca3af;
+
+  /* Borders & radii */
+  --ff-radius-xs: 6px;
+  --ff-radius-sm: 10px;
+  --ff-radius-md: 16px;
+  --ff-radius-lg: 20px;
+  --ff-radius-pill: 999px;
+
+  /* Shadows */
+  --ff-shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.65);
+  --ff-shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
