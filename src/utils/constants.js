@@ -6,12 +6,6 @@ export const TASK_STATUS = {
   DONE: 'done',
 };
 
-export const TASK_PRIORITY = {
-  HIGH: 'high',
-  MEDIUM: 'medium',
-  LOW: 'low',
-};
-
 export const TIMER_MODE = {
   WORK: 'work',
   BREAK: 'break',

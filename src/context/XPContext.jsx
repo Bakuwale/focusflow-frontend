@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import gamificationService from '../services/gamificationService';
+import AchievementToast from '../components/common/AchievementToast';
 
 const XPContext = createContext();
 
@@ -26,6 +27,8 @@ export const XPProvider = ({ children }) => {
     lastActiveDate: null,
   });
 
+  const [currentAchievement, setCurrentAchievement] = useState(null);
+
   // Load XP and streak data on mount
   useEffect(() => {
     loadXPData();
@@ -42,10 +45,40 @@ export const XPProvider = ({ children }) => {
     setStreakData(data);
   };
 
+  // Show achievement notification
+  const showAchievement = (type, title, message, xp) => {
+    setCurrentAchievement({ type, title, message, xp });
+  };
+
   // Add XP (called from other contexts)
   const addXP = (amount, reason = '') => {
     const result = gamificationService.addXP(amount, reason);
     loadXPData();
+    
+    // Show achievement notification
+    if (result.leveledUp) {
+      showAchievement(
+        'level_up',
+        `Level Up! 🎉`,
+        `You've reached level ${result.level}!`,
+        amount
+      );
+    } else if (reason === 'Task completed') {
+      showAchievement(
+        'task_completed',
+        'Task Completed! ✅',
+        'Great job staying productive!',
+        amount
+      );
+    } else if (reason === 'Focus session completed') {
+      showAchievement(
+        'focus_session',
+        'Focus Session Complete! 🎯',
+        'You stayed focused for a full session!',
+        amount
+      );
+    }
+    
     return result;
   };
 
@@ -68,5 +101,13 @@ export const XPProvider = ({ children }) => {
     },
   };
 
-  return <XPContext.Provider value={value}>{children}</XPContext.Provider>;
+  return (
+    <XPContext.Provider value={value}>
+      {children}
+      <AchievementToast 
+        achievement={currentAchievement}
+        onClose={() => setCurrentAchievement(null)}
+      />
+    </XPContext.Provider>
+  );
 };

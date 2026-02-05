@@ -19,12 +19,23 @@ export const TimerProvider = ({ children }) => {
   const [state, setState] = useState(TIMER_STATE.IDLE);
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
   const [totalFocusMinutes, setTotalFocusMinutes] = useState(0);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   const intervalRef = useRef(null);
-  const settings = storageService.getSettings();
+  
+  // Use default settings since we removed SettingsContext
+  const defaultSettings = {
+    workDuration: 25,
+    breakDuration: 5,
+  };
 
   // Load sessions and stats from localStorage
   useEffect(() => {
+    loadSessionData();
+  }, []);
+
+  // Function to reload session data
+  const loadSessionData = () => {
     const sessions = storageService.getSessions();
     setSessionsCompleted(sessions.length);
     
@@ -32,26 +43,28 @@ export const TimerProvider = ({ children }) => {
       return sum + (session.duration || 0);
     }, 0);
     setTotalFocusMinutes(totalMinutes);
-  }, []);
+  };
 
-  // Initialize timer with settings
+  // Initialize timer with default settings
   useEffect(() => {
-    const workDuration = settings.workDuration || 25;
+    const workDuration = defaultSettings.workDuration || 25;
     setTimeRemaining(workDuration * 60);
-  }, [settings.workDuration]);
+  }, []);
 
   // Handle timer completion
   const handleTimerComplete = useCallback(() => {
-    const workDuration = settings.workDuration || 25;
-    const breakDuration = settings.breakDuration || 5;
+    const workDuration = defaultSettings.workDuration || 25;
+    const breakDuration = defaultSettings.breakDuration || 5;
 
-    // Save session if it was a work session
+    // Save session if it was a work session (even if not completed)
     if (mode === TIMER_MODE.WORK) {
+      const actualDuration = workDuration; // Full duration since it completed naturally
       const session = {
         id: Date.now().toString(),
-        duration: workDuration,
+        duration: actualDuration,
         completedAt: new Date().toISOString(),
         mode: TIMER_MODE.WORK,
+        isComplete: true, // Mark as fully completed
       };
 
       const sessions = storageService.getSessions();
@@ -59,18 +72,24 @@ export const TimerProvider = ({ children }) => {
       storageService.saveSessions(sessions);
 
       setSessionsCompleted((prev) => prev + 1);
-      setTotalFocusMinutes((prev) => prev + workDuration);
+      setTotalFocusMinutes((prev) => prev + actualDuration);
 
-      // Reward XP for completing focus session
+      // Force immediate reload of session data
+      setTimeout(() => loadSessionData(), 100);
+
+      // Reward XP for completing focus session (only if fully completed)
       gamificationService.rewardFocusSession();
     }
 
-    // Switch mode
+    // Auto-restart: Switch mode and start new session
     const newMode = mode === TIMER_MODE.WORK ? TIMER_MODE.BREAK : TIMER_MODE.WORK;
     setMode(newMode);
     setTimeRemaining(newMode === TIMER_MODE.WORK ? workDuration * 60 : breakDuration * 60);
-    setState(TIMER_STATE.COMPLETED);
-  }, [mode, settings]);
+    
+    // Auto-start the next session
+    setState(TIMER_STATE.RUNNING);
+    setIsFocusMode(false);
+  }, [mode, defaultSettings]);
 
   // Timer countdown logic
   useEffect(() => {
@@ -102,6 +121,9 @@ export const TimerProvider = ({ children }) => {
   // Start timer
   const startTimer = () => {
     setState(TIMER_STATE.RUNNING);
+    if (mode === TIMER_MODE.WORK) {
+      setIsFocusMode(true);
+    }
   };
 
   // Pause timer
@@ -109,25 +131,64 @@ export const TimerProvider = ({ children }) => {
     setState(TIMER_STATE.PAUSED);
   };
 
+  // End timer session (new function)
+  const endTimer = () => {
+    // Calculate time spent
+    const workDuration = defaultSettings.workDuration || 25;
+    const timeSpent = (workDuration * 60 - timeRemaining) / 60;
+    
+    if (timeSpent >= 0.01) { // Only save if at least 0.6 seconds (0.01 minute) was spent
+      const session = {
+        id: Date.now().toString(),
+        duration: timeSpent,
+        completedAt: new Date().toISOString(),
+        mode: TIMER_MODE.WORK,
+        isComplete: false, // Mark as manually ended
+      };
+
+      const sessions = storageService.getSessions();
+      sessions.push(session);
+      storageService.saveSessions(sessions);
+
+      // Force immediate update of session data
+      loadSessionData();
+    }
+
+    // Reset to idle state
+    const duration = workDuration;
+    setTimeRemaining(duration * 60);
+    setState(TIMER_STATE.IDLE);
+    setIsFocusMode(false);
+    
+    return timeSpent; // Return time spent for display
+  };
+
   // Reset timer
   const resetTimer = () => {
-    const workDuration = settings.workDuration || 25;
-    const breakDuration = settings.breakDuration || 5;
+    const workDuration = defaultSettings.workDuration || 25;
+    const breakDuration = defaultSettings.breakDuration || 5;
     const duration = mode === TIMER_MODE.WORK ? workDuration : breakDuration;
     
     setTimeRemaining(duration * 60);
     setState(TIMER_STATE.IDLE);
+    setIsFocusMode(false);
   };
 
   // Switch mode
   const switchMode = (newMode) => {
-    const workDuration = settings.workDuration || 25;
-    const breakDuration = settings.breakDuration || 5;
+    const workDuration = defaultSettings.workDuration || 25;
+    const breakDuration = defaultSettings.breakDuration || 5;
     const duration = newMode === TIMER_MODE.WORK ? workDuration : breakDuration;
     
     setMode(newMode);
     setTimeRemaining(duration * 60);
     setState(TIMER_STATE.IDLE);
+    setIsFocusMode(false);
+  };
+
+  // Toggle focus mode manually
+  const toggleFocusMode = () => {
+    setIsFocusMode(!isFocusMode);
   };
 
   // Format time as MM:SS
@@ -141,9 +202,26 @@ export const TimerProvider = ({ children }) => {
     };
   };
 
-  // Get total focus hours
+  // Get total focus hours (all time)
   const getTotalFocusHours = () => {
     return (totalFocusMinutes / 60).toFixed(1);
+  };
+
+  // Get today's focus hours
+  const getTodayFocusHours = () => {
+    const sessions = storageService.getSessions();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const todaySessions = sessions.filter(session => {
+      const sessionDate = new Date(session.completedAt).toISOString().split('T')[0];
+      return sessionDate === today;
+    });
+    
+    const todayMinutes = todaySessions.reduce((sum, session) => {
+      return sum + (session.duration || 0);
+    }, 0);
+    
+    return (todayMinutes / 60).toFixed(1);
   };
 
   const value = {
@@ -153,11 +231,16 @@ export const TimerProvider = ({ children }) => {
     sessionsCompleted,
     totalFocusMinutes,
     totalFocusHours: getTotalFocusHours(),
+    todayFocusHours: getTodayFocusHours(),
+    isFocusMode,
     startTimer,
     pauseTimer,
+    endTimer,
     resetTimer,
     switchMode,
+    toggleFocusMode,
     formatTime,
+    refreshData: loadSessionData, // Add refresh function
     isRunning: state === TIMER_STATE.RUNNING,
     isPaused: state === TIMER_STATE.PAUSED,
     isIdle: state === TIMER_STATE.IDLE,

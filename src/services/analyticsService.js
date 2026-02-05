@@ -77,6 +77,36 @@ class AnalyticsService {
     return Math.min((todayCount / goal) * 100, 100);
   }
 
+  // Get weekly progress comparison (only count completed days)
+  getWeeklyProgress() {
+    const thisWeek = this.getWeeklyData();
+    const lastWeekStart = dayjs().subtract(13, 'days').toDate();
+    const lastWeekEnd = dayjs().subtract(7, 'days').toDate();
+    
+    const lastWeekSessions = this.getSessionsByDateRange(lastWeekStart, lastWeekEnd);
+    
+    // Only count sessions from completed days (not today)
+    const today = dayjs().format('YYYY-MM-DD');
+    const completedThisWeekSessions = thisWeek.filter(day => {
+      const dayDate = dayjs().subtract(6 - thisWeek.indexOf(day), 'days').format('YYYY-MM-DD');
+      return dayDate !== today; // Exclude today
+    });
+    
+    const lastWeekTotal = lastWeekSessions.reduce((sum, session) => sum + (session.duration || 0), 0);
+    const thisWeekTotal = completedThisWeekSessions.reduce((sum, day) => sum + (day.hours * 60), 0);
+    
+    const improvement = lastWeekTotal > 0 
+      ? ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100 
+      : thisWeekTotal > 0 ? 100 : 0;
+    
+    return {
+      thisWeek: thisWeekTotal,
+      lastWeek: lastWeekTotal,
+      improvement: Math.round(improvement),
+      dailyAverage: Math.round(thisWeekTotal / 6), // Divide by 6 since we exclude today
+    };
+  }
+
   // Get recent sessions (last N sessions)
   getRecentSessions(limit = 10) {
     const sessions = this.getSessions();

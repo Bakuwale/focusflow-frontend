@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, CheckSquare, Timer, BarChart3, Settings } from 'lucide-react';
+import { Home, CheckSquare, Timer, BarChart3 } from 'lucide-react';
 import styles from './BottomNav.styles';
 
 const BottomNav = () => {
@@ -11,7 +11,6 @@ const BottomNav = () => {
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { path: '/focus', icon: Timer, label: 'Focus' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (

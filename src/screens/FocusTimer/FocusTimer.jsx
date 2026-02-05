@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import LayoutContainer from '../../components/layout/LayoutContainer';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { useTimer } from '../../context/TimerContext';
-import { useSettings } from '../../context/SettingsContext';
 import { TIMER_MODE } from '../../utils/constants';
 import { Play, Pause, RotateCcw, Coffee } from 'lucide-react';
 import styles from './FocusTimer.styles';
@@ -16,6 +15,7 @@ const FocusTimer = () => {
     sessionsCompleted,
     startTimer,
     pauseTimer,
+    endTimer,
     resetTimer,
     switchMode,
     formatTime,
@@ -25,11 +25,12 @@ const FocusTimer = () => {
     isCompleted,
   } = useTimer();
 
-  const { settings } = useSettings();
+  const [endMessage, setEndMessage] = useState('');
+  const [showEndMessage, setShowEndMessage] = useState(false);
 
   // Handle timer completion notification
   useEffect(() => {
-    if (isCompleted && settings.notifications) {
+    if (isCompleted) {
       // Browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(
@@ -43,25 +44,63 @@ const FocusTimer = () => {
         );
       }
     }
-  }, [isCompleted, mode, settings.notifications]);
+  }, [isCompleted, mode]);
 
   // Request notification permission on mount
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default' && settings.notifications) {
+    if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, [settings.notifications]);
+  }, []);
 
   const handleStart = () => {
     startTimer();
+    setShowEndMessage(false);
   };
 
   const handlePause = () => {
     pauseTimer();
   };
 
+  const handleEnd = () => {
+    const timeSpent = endTimer();
+    const totalSeconds = Math.round(timeSpent * 60); // Convert minutes to seconds
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    let message = '';
+    if (hours > 0) {
+      message = `You spent ${hours} hour${hours > 1 ? 's' : ''}`;
+      if (minutes > 0) {
+        message += `, ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      }
+      if (seconds > 0) {
+        message += `, and ${seconds} second${seconds > 1 ? 's' : ''}`;
+      }
+      message += ' in focus mode.';
+    } else if (minutes > 0) {
+      message = `You spent ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      if (seconds > 0) {
+        message += ` and ${seconds} second${seconds > 1 ? 's' : ''}`;
+      }
+      message += ' in focus mode.';
+    } else {
+      message = `You spent ${seconds} second${seconds > 1 ? 's' : ''} in focus mode.`;
+    }
+    
+    setEndMessage(message);
+    setShowEndMessage(true);
+    
+    // Hide message after 5 seconds
+    setTimeout(() => {
+      setShowEndMessage(false);
+    }, 5000);
+  };
+
   const handleReset = () => {
     resetTimer();
+    setShowEndMessage(false);
   };
 
   const handleModeSwitch = () => {
@@ -98,8 +137,30 @@ const FocusTimer = () => {
               </div>
             </div>
 
+            {/* End Session Message */}
+            {showEndMessage && (
+              <div style={{
+                padding: '16px',
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                borderRadius: 'var(--ff-radius-sm)',
+                color: 'var(--ff-color-accent)',
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: 500,
+                margin: '16px 0'
+              }}>
+                ✅ {endMessage}
+                <br />
+                <span style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Time recorded in analytics and dashboard.
+                </span>
+              </div>
+            )}
+
             <div style={styles.controls}>
-              {isIdle || isCompleted ? (
+              {isIdle ? (
+                // Only Start button when idle
                 <Button
                   variant="primary"
                   size="lg"
@@ -110,6 +171,7 @@ const FocusTimer = () => {
                   Start
                 </Button>
               ) : isRunning ? (
+                // Only Pause button when running
                 <Button
                   variant="secondary"
                   size="lg"
@@ -119,28 +181,37 @@ const FocusTimer = () => {
                   <Pause size={24} style={{ marginRight: '8px' }} />
                   Pause
                 </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handleStart}
-                  style={styles.controlButton}
-                >
-                  <Play size={24} style={{ marginRight: '8px' }} />
-                  Resume
-                </Button>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={handleReset}
-                style={styles.controlButton}
-                disabled={isRunning}
-              >
-                <RotateCcw size={24} style={{ marginRight: '8px' }} />
-                Reset
-              </Button>
+              ) : isPaused ? (
+                // Resume, End, and Reset buttons when paused
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handleStart}
+                  >
+                    <Play size={20} style={{ marginRight: '6px' }} />
+                    Resume
+                  </Button>
+                  
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={handleEnd}
+                    style={{ background: 'var(--ff-color-accent)', color: 'white' }}
+                  >
+                    End Session
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    onClick={handleReset}
+                  >
+                    <RotateCcw size={20} style={{ marginRight: '6px' }} />
+                    Reset
+                  </Button>
+                </div>
+              ) : null}
             </div>
 
             {isCompleted && (

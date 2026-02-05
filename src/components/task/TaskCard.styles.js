@@ -23,12 +23,13 @@ export const deleteButton = {
   border: 'none',
   color: 'var(--ff-color-text-muted)',
   cursor: 'pointer',
-  padding: '4px',
+  padding: '6px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   borderRadius: 'var(--ff-radius-xs)',
-  transition: 'color 0.2s ease',
+  transition: 'all 0.2s ease',
+  opacity: 0.7,
 };
 
 export const title = {

@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Input from '../common/Input';
 import Button from '../common/Button';
-import { TASK_STATUS, TASK_PRIORITY } from '../../utils/constants';
+import { TASK_STATUS } from '../../utils/constants';
 
 const TaskModal = ({ isOpen, onClose, task, onSave }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     status: TASK_STATUS.TODO,
-    priority: TASK_PRIORITY.MEDIUM,
-    dueDate: '',
   });
 
   useEffect(() => {
@@ -19,16 +17,12 @@ const TaskModal = ({ isOpen, onClose, task, onSave }) => {
         title: task.title || '',
         description: task.description || '',
         status: task.status || TASK_STATUS.TODO,
-        priority: task.priority || TASK_PRIORITY.MEDIUM,
-        dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
       });
     } else {
       setFormData({
         title: '',
         description: '',
         status: TASK_STATUS.TODO,
-        priority: TASK_PRIORITY.MEDIUM,
-        dueDate: '',
       });
     }
   }, [task, isOpen]);
@@ -37,12 +31,7 @@ const TaskModal = ({ isOpen, onClose, task, onSave }) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
 
-    const taskData = {
-      ...formData,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-    };
-
-    onSave(taskData);
+    onSave(formData);
     onClose();
   };
 
@@ -79,38 +68,6 @@ const TaskModal = ({ isOpen, onClose, task, onSave }) => {
               resize: 'vertical',
               fontFamily: 'inherit',
             }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--ff-color-text)' }}>
-            Priority
-          </label>
-          <select
-            value={formData.priority}
-            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              background: 'var(--ff-color-surface-soft)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 'var(--ff-radius-sm)',
-              color: 'var(--ff-color-text)',
-              fontSize: '16px',
-            }}
-          >
-            <option value={TASK_PRIORITY.LOW}>Low</option>
-            <option value={TASK_PRIORITY.MEDIUM}>Medium</option>
-            <option value={TASK_PRIORITY.HIGH}>High</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <Input
-            label="Due Date"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
           />
         </div>
 

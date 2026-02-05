@@ -5,7 +5,6 @@ const STORAGE_KEYS = {
   TASKS: 'focusflow_tasks',
   TIMER_SESSIONS: 'focusflow_timer_sessions',
   XP_DATA: 'focusflow_xp_data',
-  SETTINGS: 'focusflow_settings',
   STREAK_DATA: 'focusflow_streak_data',
 };
 
@@ -82,20 +81,6 @@ class StorageService {
 
   saveXPData(xpData) {
     return this.set(STORAGE_KEYS.XP_DATA, xpData);
-  }
-
-  // Settings
-  getSettings() {
-    return this.get(STORAGE_KEYS.SETTINGS, {
-      workDuration: 25,
-      breakDuration: 5,
-      darkMode: true,
-      notifications: true,
-    });
-  }
-
-  saveSettings(settings) {
-    return this.set(STORAGE_KEYS.SETTINGS, settings);
   }
 
   // Streak data

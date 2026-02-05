@@ -5,7 +5,10 @@
 :root {
   /* Brand */
   --ff-color-primary: #6366f1;
+  --ff-color-primary-rgb: 99, 102, 241;
   --ff-color-primary-soft: rgba(99, 102, 241, 0.16);
+  --ff-color-primary-hover: #5855eb;
+  --ff-color-secondary: #8b5cf6;
   --ff-color-accent: #22c55e;
   --ff-color-warning: #f97316;
   --ff-color-danger: #ef4444;
@@ -14,6 +17,7 @@
   --ff-color-bg: #050816;
   --ff-color-surface: #0b1020;
   --ff-color-surface-soft: #111827;
+  --ff-color-surface-hover: #1f2937;
 
   /* Text */
   --ff-color-text: #f9fafb;
@@ -24,6 +28,7 @@
   --ff-radius-sm: 10px;
   --ff-radius-md: 16px;
   --ff-radius-lg: 20px;
+  --ff-radius-full: 9999px;
   --ff-radius-pill: 999px;
 
   /* Shadows */

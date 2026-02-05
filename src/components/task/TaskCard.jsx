@@ -1,16 +1,10 @@
-import React from 'react';
-import Badge from '../common/Badge';
+import React, { useState } from 'react';
 import Card from '../common/Card';
-import { Calendar, Flag, Trash2 } from 'lucide-react';
-import { getRelativeDate } from '../../utils/dateUtils';
+import { Trash2 } from 'lucide-react';
 import styles from './TaskCard.styles';
 
 const TaskCard = ({ task, onClick, onDelete }) => {
-  const priorityColors = {
-    high: 'danger',
-    medium: 'warning',
-    low: 'default',
-  };
+  const [isDeleteHovered, setIsDeleteHovered] = useState(false);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -19,9 +13,13 @@ const TaskCard = ({ task, onClick, onDelete }) => {
     }
   };
 
-  const formatDueDate = () => {
-    if (!task.dueDate) return null;
-    return getRelativeDate(new Date(task.dueDate));
+  const deleteButtonStyle = {
+    ...styles.deleteButton,
+    ...(isDeleteHovered && {
+      color: 'var(--ff-color-danger)',
+      background: 'rgba(239, 68, 68, 0.1)',
+      opacity: 1,
+    }),
   };
 
   return (
@@ -29,16 +27,12 @@ const TaskCard = ({ task, onClick, onDelete }) => {
       <div style={styles.header}>
         <h3 style={styles.title}>{task.title}</h3>
         <div style={styles.headerActions}>
-          {task.priority && (
-            <Badge variant={priorityColors[task.priority] || 'default'} size="sm">
-              <Flag size={10} style={{ marginRight: '4px' }} />
-              {task.priority}
-            </Badge>
-          )}
           {onDelete && (
             <button
               onClick={handleDelete}
-              style={styles.deleteButton}
+              onMouseEnter={() => setIsDeleteHovered(true)}
+              onMouseLeave={() => setIsDeleteHovered(false)}
+              style={deleteButtonStyle}
               title="Delete task"
             >
               <Trash2 size={14} />
@@ -50,15 +44,6 @@ const TaskCard = ({ task, onClick, onDelete }) => {
       {task.description && (
         <p style={styles.description}>{task.description}</p>
       )}
-      
-      <div style={styles.footer}>
-        {task.dueDate && (
-          <div style={styles.meta}>
-            <Calendar size={14} />
-            <span style={styles.metaText}>{formatDueDate()}</span>
-          </div>
-        )}
-      </div>
     </Card>
   );
 };

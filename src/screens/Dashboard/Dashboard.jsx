@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LayoutContainer from '../../components/layout/LayoutContainer';
 import Card from '../../components/common/Card';
@@ -12,11 +12,16 @@ import styles from './Dashboard.styles';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getTaskCounts, getCompletedTasksCount } = useTasks();
-  const { totalFocusHours, sessionsCompleted } = useTimer();
+  const { getTodayTaskCounts, getCompletedTasksCount } = useTasks();
+  const { todayFocusHours, sessionsCompleted, refreshData } = useTimer();
   const { xpData, streakData } = useXP();
 
-  const taskCounts = getTaskCounts();
+  // Refresh timer data when component mounts or becomes visible
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  const todayTaskCounts = getTodayTaskCounts();
   const completedTasks = getCompletedTasksCount();
 
   const quickActions = [
@@ -39,8 +44,8 @@ const Dashboard = () => {
               <Target size={24} color="var(--ff-color-primary)" />
             </div>
             <div style={styles.statContent}>
-              <h3 style={styles.statValue}>{taskCounts.total}</h3>
-              <p style={styles.statLabel}>Total Tasks</p>
+              <h3 style={styles.statValue}>{todayTaskCounts.total}</h3>
+              <p style={styles.statLabel}>Today's Tasks</p>
             </div>
           </Card>
 
@@ -50,7 +55,7 @@ const Dashboard = () => {
             </div>
             <div style={styles.statContent}>
               <h3 style={styles.statValue}>{completedTasks}</h3>
-              <p style={styles.statLabel}>Completed</p>
+              <p style={styles.statLabel}>Completed Today</p>
             </div>
           </Card>
 
@@ -59,8 +64,8 @@ const Dashboard = () => {
               <Clock size={24} color="var(--ff-color-warning)" />
             </div>
             <div style={styles.statContent}>
-              <h3 style={styles.statValue}>{parseFloat(totalFocusHours).toFixed(1)}h</h3>
-              <p style={styles.statLabel}>Focus Hours</p>
+              <h3 style={styles.statValue}>{parseFloat(todayFocusHours).toFixed(1)}h</h3>
+              <p style={styles.statLabel}>Focus Hours Today</p>
             </div>
           </Card>
 
